@@ -21,4 +21,5 @@ FAVECore
 CxMonSvc
 CxUtilSvc
 CxAudMsg
-Audiosrv
+Apple Mobile Device Service
+Bonjour Service
