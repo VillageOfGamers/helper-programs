@@ -3,6 +3,8 @@
 #include <string.h>
 #include "cjson/cJSON.h"
 #define BUFFER_SIZE 4096
+#define HIGH_TEMP 80
+#define CRIT_TEMP 100
 
 typedef struct {
     char name[50];
@@ -15,10 +17,12 @@ int main() {
     FILE *fp;
     fp = popen("sensors -j", "r");
     if (fp == NULL) {
+        printf("Failed to run sensors command\n");
         return 1;
     }
     size_t bytes_read = fread(buffer, 1, sizeof(buffer) - 1, fp);
     if (bytes_read == 0) {
+        printf("No data read from sensors\n");
         pclose(fp);
         return 1;
     }
@@ -26,25 +30,25 @@ int main() {
     pclose(fp);
     cJSON *json = cJSON_Parse(buffer);
     if (json == NULL) {
+        printf("Error parsing JSON\n");
         return 1;
     }
-    const char *temp_unit = "°C";
-    cJSON *sensor = cJSON_GetObjectItem(json, "coretemp-isa-0000");
-    if (sensor == NULL) {
-        cJSON_Delete(json);
-        return 1;
-    }
-    cJSON *core = NULL;
-    cJSON_ArrayForEach(core, sensor) {
-        cJSON *temp_entry = cJSON_GetObjectItem(core, "temp1_input");
-        if (cJSON_IsNumber(temp_entry)) {
-            current_temp = temp_entry->valueint;
+    cJSON *sensor = NULL;
+    cJSON_ArrayForEach(sensor, json) {
+        cJSON *core = NULL;
+        cJSON_ArrayForEach(core, sensor) {
+            cJSON *temp_entry = cJSON_GetObjectItem(core, "temp1_input");
+            if (cJSON_IsNumber(temp_entry)) {
+                current_temp = temp_entry->valueint;
+            }
         }
     }
-    if (current_temp != 0) {
-        printf("%i%s\n", current_temp, temp_unit);
+    if (current_temp >= CRIT_TEMP) {
+        printf("CRITICAL!\n");
+    } else if (current_temp >= HIGH_TEMP) {
+        printf("High\n");
     } else {
-        return 1;
+        printf("Normal\n");
     }
     cJSON_Delete(json);
     return 0;
