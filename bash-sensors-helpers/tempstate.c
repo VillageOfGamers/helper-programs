@@ -3,8 +3,8 @@
 #include <string.h>
 #include "cjson/cJSON.h"
 #define BUFFER_SIZE 4096
-#define HIGH_TEMP 80
-#define CRIT_TEMP 100
+#define HIGH_TEMP 75
+#define CRIT_TEMP 85
 
 typedef struct {
     char name[50];
